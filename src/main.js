@@ -10,6 +10,7 @@ import { generateRhythm, computeBarTicks, NOTE_VALUES }                         
 import { buildHarmonyMap, selectNote, computeArc, midiNoteName, computeResolution } from './harmony.js';
 import { buildScaleChords, buildProgression, getActiveChord, progressionLabel }    from './chords.js';
 import { buildMidi, download }                                                     from './midi.js';
+import { generateCantusFirmus }                                                    from './cantus.js';
 
 // ── DOM references ────────────────────────────────────────────────────────────
 
@@ -36,8 +37,16 @@ const perpetualCheck  = document.getElementById('perpetual');
 const noteValueSel    = document.getElementById('noteValue');
 const perpetualFields = document.getElementById('perpetualFields');
 const normalFields    = document.getElementById('normalFields');
-const generateBtn     = document.getElementById('generate');
-const output          = document.getElementById('output');
+const generateBtn      = document.getElementById('generate');
+const output           = document.getElementById('output');
+const cfModeCheck      = document.getElementById('cfMode');
+const cfFields         = document.getElementById('cfFields');
+const cfLengthInput    = document.getElementById('cfLength');
+const cfVoiceSel       = document.getElementById('cfVoice');
+const characterSection = document.getElementById('characterSection');
+const perpetualSection = document.getElementById('perpetualSection');
+const barsGroup        = document.getElementById('barsGroup');
+const cadenceGroup     = document.getElementById('cadenceGroup');
 
 // ── Populate selects ──────────────────────────────────────────────────────────
 
@@ -103,13 +112,61 @@ perpetualCheck.addEventListener('change', () => {
 
 // ── Generation pipeline ───────────────────────────────────────────────────────
 
+cfModeCheck.addEventListener('change', () => {
+  const on = cfModeCheck.checked;
+  cfFields.style.display = on ? 'block' : 'none';
+  for (const el of [characterSection, perpetualSection, barsGroup, cadenceGroup]) {
+    el.style.opacity       = on ? '0.35' : '1';
+    el.style.pointerEvents = on ? 'none'  : '';
+  }
+  generateBtn.textContent = on ? 'Generate CF & Download MIDI' : 'Generate & Download MIDI';
+});
+
 generateBtn.addEventListener('click', () => {
-  const rootPc      = Number(rootSelect.value);
-  const scale       = getScale(scaleSelect.value);
+  const rootPc = Number(rootSelect.value);
+  const scale  = getScale(scaleSelect.value);
+  const bpm    = Math.max(40, Math.min(240, Number(bpmInput.value) || 120));
+
+  // ── Cantus firmus path ────────────────────────────────────────────────────
+  if (cfModeCheck.checked) {
+    const length     = Math.max(8, Math.min(16, Number(cfLengthInput.value) || 8));
+    const voiceRange = cfVoiceSel.value;
+
+    generateBtn.disabled    = true;
+    generateBtn.textContent = 'Generating…';
+    output.textContent      = '';
+
+    requestAnimationFrame(() => {
+      try {
+        const events   = generateCantusFirmus(rootPc, scale, length, voiceRange);
+        const rootName = PITCH_NAMES[rootPc];
+        const midi     = buildMidi(events, bpm, [4, 4], {
+          trackName: `${rootName} ${scale.name} CF`,
+          program:   0,
+        });
+        const slug = scale.name.replace(/[\s/]+/g, '_');
+        download(midi, `${rootName}_${slug}_CF.mid`);
+
+        const noteNames = events.map(e => midiNoteName(e.pitch)).join('  ');
+        output.innerHTML =
+          `<strong>${events.length} notes</strong> · ${rootName} ${scale.name}<br>` +
+          `<span style="color:#999">${noteNames}</span>`;
+
+      } catch (err) {
+        output.textContent = `Error: ${err.message}`;
+        console.error(err);
+      } finally {
+        generateBtn.disabled    = false;
+        generateBtn.textContent = 'Generate CF & Download MIDI';
+      }
+    });
+    return;
+  }
+
+  // ── Melody path ───────────────────────────────────────────────────────────
   const [tsNum, tsDen] = timeSigSel.value.split('/').map(Number);
   const timeSig     = [tsNum, tsDen];
   const bars        = Math.max(1, Math.min(16, Number(barsInput.value)  || 8));
-  const bpm         = Math.max(40, Math.min(240, Number(bpmInput.value) || 120));
   const cadenceType = cadenceSel.value;
   const isPerpetual = perpetualCheck.checked;
 

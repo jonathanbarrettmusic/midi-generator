@@ -164,6 +164,12 @@
       color: #555;
       line-height: 1.65;
     }
+
+    /* ── Cantus firmus ── */
+    #cfFields {
+      display: none;
+      margin-top: 0.5rem;
+    }
   </style>
 </head>
 <body>
@@ -171,7 +177,7 @@
 
   <div class="row">
     <div>
-      <label for="root">Root note</label>
+      <label for="root">Tonic</label>
       <select id="root"></select>
     </div>
     <div>
@@ -192,7 +198,7 @@
   <p id="scale-desc"></p>
 
   <div class="row">
-    <div>
+    <div id="barsGroup">
       <label for="bars">Length (bars, 1–16)</label>
       <input type="number" id="bars" min="1" max="16" value="8" />
     </div>
@@ -203,7 +209,7 @@
   </div>
 
   <div class="row">
-    <div>
+    <div id="cadenceGroup">
       <label for="cadence">Ending cadence</label>
       <select id="cadence">
         <option value="authentic">Authentic (V → I)</option>
@@ -214,7 +220,7 @@
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="characterSection">
     <h2>Character</h2>
 
     <div id="normalFields">
@@ -256,7 +262,7 @@
     </div>
   </div>
 
-  <div class="section">
+  <div class="section" id="perpetualSection">
     <h2>Perpetual Motion</h2>
 
     <div class="toggle-row">
@@ -270,6 +276,33 @@
         <option value="eighth">Eighth notes</option>
         <option value="sixteenth">Sixteenth notes</option>
       </select>
+    </div>
+  </div>
+
+  <div class="section" id="cfSection">
+    <h2>Cantus Firmus</h2>
+
+    <div class="toggle-row">
+      <input type="checkbox" id="cfMode" />
+      <label for="cfMode">Whole notes, tonic start &amp; end, consonant leaps only</label>
+    </div>
+
+    <div id="cfFields">
+      <div class="row">
+        <div>
+          <label for="cfLength">Length (8–16 notes)</label>
+          <input type="number" id="cfLength" min="8" max="16" value="8" />
+        </div>
+        <div>
+          <label for="cfVoice">Voice range</label>
+          <select id="cfVoice">
+            <option value="soprano">Soprano (C4–G5)</option>
+            <option value="alto">Alto (G3–D5)</option>
+            <option value="tenor" selected>Tenor (C3–G4)</option>
+            <option value="bass">Bass (E2–D4)</option>
+          </select>
+        </div>
+      </div>
     </div>
   </div>
 
